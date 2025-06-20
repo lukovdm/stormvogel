@@ -99,14 +99,14 @@ def build_property_string(model: stormvogel.model.Model):
 
             if self.values["type of task"]["task"] == "obtain":
                 prop += (
-                    f"{"max" if self.values["type of task"]["maxmin"] == "max" else "min"}=?"
+                    f"{'max' if self.values['type of task']['maxmin'] == 'max' else 'min'}=?"
                     if model.supports_actions()
                     else "=?"
                 )
             else:
                 prop += str(self.values["type of task"]["operator"])
                 prop += str(self.values["type of task"]["value"])
-            prop += f' [F "{self.values['path']['path']}"]'
+            prop += f' [F "{self.values["path"]["path"]}"]'
 
             return prop
 

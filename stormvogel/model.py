@@ -80,11 +80,11 @@ class State:
                 "There is already a state with this id. Make sure the id is unique."
             )
 
-        used_names = [state.name for state in self.model.states.values()]
-        if name in used_names:
-            raise RuntimeError(
-                "There is already a state with this name. Make sure the name is unique."
-            )
+        # used_names = [state.name for state in self.model.states.values()]
+        # if name in used_names:
+        #     raise RuntimeError(
+        #         "There is already a state with this name. Make sure the name is unique."
+        #     )
 
         self.labels = labels
         self.valuations = valuations
@@ -92,10 +92,10 @@ class State:
         self.observation = None
 
         if name is None:
-            if str(id) in used_names:
-                raise RuntimeError(
-                    "You need to choose a state name because of a conflict (possibly because of state removal)."
-                )
+            # if str(id) in used_names:
+            #     raise RuntimeError(
+            #         "You need to choose a state name because of a conflict (possibly because of state removal)."
+            #     )
             self.name = str(id)
         else:
             self.name = name
@@ -670,10 +670,7 @@ class Model:
     def __free_state_id(self) -> int:
         """Gets a free id in the states dict."""
         # TODO: slow, not sure if that will become a problem though
-        i = 0
-        while i in self.states:
-            i += 1
-        return i
+        return len(self.states)
 
     def add_self_loops(self):
         """adds self loops to all states that do not have an outgoing transition"""

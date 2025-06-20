@@ -139,6 +139,7 @@ def build_pgc(
     valuations: Callable | None = None,
     modeltype: stormvogel.model.ModelType = stormvogel.model.ModelType.MDP,
     max_size: int = 2000,
+    safe: bool = True,
 ) -> stormvogel.model.Model:
     """
     function that converts a delta function, an available_actions function an initial state and a model type
@@ -165,7 +166,7 @@ def build_pgc(
                     val = tup[0]
 
                 if s not in states_seen:
-                    states_seen.append(s)
+                    states_seen.add(s)
                     new_state = model.new_state()
                     state_lookup[s] = new_state
                     branch.append((val, new_state))
@@ -195,7 +196,7 @@ def build_pgc(
 
     # we continue calling delta and adding new states until no states are
     # left to be checked
-    states_seen = []
+    states_seen = set()
     states_to_be_visited = [initial_state_pgc]
     state_lookup = {initial_state_pgc: init}
     while len(states_to_be_visited) > 0:
@@ -204,7 +205,7 @@ def build_pgc(
         transition = {}
 
         if state not in states_seen:
-            states_seen.append(state)
+            states_seen.add(state)
 
         if model.supports_actions():
             # we loop over all available actions and call the delta function for each actions
@@ -404,15 +405,16 @@ def build_pgc(
                     "Make sure that you have a value for each variable in each state"
                 )
 
-            for val in valuation_list.values():
-                if not (
-                    isinstance(val, int)
-                    or isinstance(val, bool)
-                    or isinstance(val, float)
-                ):
-                    raise ValueError(
-                        f"On input {state}, the dictionary that the valuations function returns contains a value {val} which is not of type int, float or"
-                    )
+            if safe:
+                for val in valuation_list.values():
+                    if not (
+                        isinstance(val, int)
+                        or isinstance(val, bool)
+                        or isinstance(val, float)
+                    ):
+                        raise ValueError(
+                            f"On input {state}, the dictionary that the valuations function returns contains a value {val} which is not of type int, float or"
+                        )
 
             s.valuations = valuation_list
 
