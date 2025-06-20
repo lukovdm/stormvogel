@@ -108,6 +108,11 @@ def stormvogel_to_stormpy(
         created_vars = set()
         for state in model.states.values():
             for var in sorted(state.valuations.items()):
+                if not (
+                        isinstance(var[1], int)
+                ):
+                    continue
+
                 name = str(var[0])
                 if name not in created_vars:
                     storm_var = manager.create_integer_variable(name)
@@ -117,7 +122,7 @@ def stormvogel_to_stormpy(
         # we assign the values to the variables in the states
         for state in model.states.values():
             valuations.add_state(
-                state.id, integer_values=list(state.valuations.values())
+                state.id, integer_values=list([v for v in state.valuations.values() if isinstance(v, int)])
             )
 
         return valuations.build()
