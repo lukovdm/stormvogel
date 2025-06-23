@@ -9,7 +9,7 @@ except ImportError:
 
 
 def stormvogel_to_stormpy(
-    model: stormvogel.model.Model,
+    model: stormvogel.model.Model, exact: bool = False
 ) -> Optional[
     Union[
         "stormpy.storage.SparseDtmc",
@@ -28,24 +28,37 @@ def stormvogel_to_stormpy(
 
         assert stormpy is not None
         row_grouping = model.supports_actions()
-        builder = stormpy.SparseMatrixBuilder(
-            rows=0,
-            columns=0,
-            entries=0,
-            force_dimensions=False,
-            has_custom_row_grouping=row_grouping,
-            row_groups=0,
-        )
+
+        if exact:
+            builder = stormpy.ExactSparseMatrixBuilder(
+                rows=0,
+                columns=0,
+                entries=0,
+                force_dimensions=False,
+                has_custom_row_grouping=row_grouping,
+                row_groups=0,
+            )
+        else:
+            builder = stormpy.SparseMatrixBuilder(
+                rows=0,
+                columns=0,
+                entries=0,
+                force_dimensions=False,
+                has_custom_row_grouping=row_grouping,
+                row_groups=0,
+            )
+
         row_index = 0
         for transition in sorted(model.transitions.items()):
             if row_grouping:
                 builder.new_row_group(row_index)
             for action in transition[1].transition.items():
                 for tuple in action[1].branch:
+                    v = stormpy.Rational(tuple[0]) if exact else tuple[0]
                     builder.add_next_value(
                         row=row_index,
                         column=model.stormpy_id[tuple[1].id],
-                        value=tuple[0],
+                        value=v,
                     )
 
                 # if there is an action then add the label to the choice
@@ -89,9 +102,18 @@ def stormvogel_to_stormpy(
 
         reward_models = {}
         for rewardmodel in model.rewards:
-            reward_models[rewardmodel.name] = stormpy.SparseRewardModel(
-                optional_state_action_reward_vector=list(rewardmodel.reward_vector())
-            )
+            if exact:
+                reward_models[rewardmodel.name] = stormpy.SparseExactRewardModel(
+                    optional_state_action_reward_vector=list(
+                        stormpy.Rational(r) for r in rewardmodel.reward_vector()
+                    )
+                )
+            else:
+                reward_models[rewardmodel.name] = stormpy.SparseRewardModel(
+                    optional_state_action_reward_vector=list(
+                        rewardmodel.reward_vector()
+                    )
+                )
 
         return reward_models
 
@@ -108,9 +130,7 @@ def stormvogel_to_stormpy(
         created_vars = set()
         for state in model.states.values():
             for var in sorted(state.valuations.items()):
-                if not (
-                        isinstance(var[1], int)
-                ):
+                if not (isinstance(var[1], int)):
                     continue
 
                 name = str(var[0])
@@ -122,7 +142,10 @@ def stormvogel_to_stormpy(
         # we assign the values to the variables in the states
         for state in model.states.values():
             valuations.add_state(
-                state.id, integer_values=list([v for v in state.valuations.values() if isinstance(v, int)])
+                state.id,
+                integer_values=list(
+                    [v for v in state.valuations.values() if isinstance(v, int)]
+                ),
             )
 
         return valuations.build()
@@ -146,13 +169,24 @@ def stormvogel_to_stormpy(
         valuations = add_valuations(model)
 
         # then we build the dtmc
-        components = stormpy.SparseModelComponents(
-            transition_matrix=matrix,
-            state_labeling=state_labeling,
-            reward_models=reward_models,
-        )
+        if exact:
+            components = stormpy.SparseExactModelComponents(
+                transition_matrix=matrix,
+                state_labeling=state_labeling,
+                reward_models=reward_models,
+            )
+        else:
+            components = stormpy.SparseModelComponents(
+                transition_matrix=matrix,
+                state_labeling=state_labeling,
+                reward_models=reward_models,
+            )
+
         components.state_valuations = valuations
-        dtmc = stormpy.storage.SparseDtmc(components)
+        if exact:
+            dtmc = stormpy.storage.SparseExactDtmc(components)
+        else:
+            dtmc = stormpy.storage.SparseDtmc(components)
 
         return dtmc
 
@@ -190,14 +224,24 @@ def stormvogel_to_stormpy(
         valuations = add_valuations(model)
 
         # then we build the mdp
-        components = stormpy.SparseModelComponents(
-            transition_matrix=matrix,
-            state_labeling=state_labeling,
-            reward_models=reward_models,
-        )
+        if exact:
+            components = stormpy.SparseExactModelComponents(
+                transition_matrix=matrix,
+                state_labeling=state_labeling,
+                reward_models=reward_models,
+            )
+        else:
+            components = stormpy.SparseModelComponents(
+                transition_matrix=matrix,
+                state_labeling=state_labeling,
+                reward_models=reward_models,
+            )
         components.state_valuations = valuations
         components.choice_labeling = choice_labeling
-        mdp = stormpy.storage.SparseMdp(components)
+        if exact:
+            mdp = stormpy.storage.SparseExactMdp(components)
+        else:
+            mdp = stormpy.storage.SparseMdp(components)
 
         return mdp
 
@@ -206,6 +250,11 @@ def stormvogel_to_stormpy(
         Takes a simple representation of a ctmc as input and outputs a ctmc how it is represented in stormpy
         """
         assert stormpy is not None
+
+        if exact:
+            raise ValueError(
+                "Exact sparse ctmcs are not supported in the mapping. Please set exact=False."
+            )
 
         # we first build the SparseMatrix (in stormvogel these are always the rate transitions)
         matrix = build_matrix(model, None)
@@ -268,11 +317,19 @@ def stormvogel_to_stormpy(
         valuations = add_valuations(model)
 
         # then we build the pomdp
-        components = stormpy.SparseModelComponents(
-            transition_matrix=matrix,
-            state_labeling=state_labeling,
-            reward_models=reward_models,
-        )
+        if exact:
+            components = stormpy.SparseExactModelComponents(
+                transition_matrix=matrix,
+                state_labeling=state_labeling,
+                reward_models=reward_models,
+            )
+        else:
+            components = stormpy.SparseModelComponents(
+                transition_matrix=matrix,
+                state_labeling=state_labeling,
+                reward_models=reward_models,
+            )
+
         components.state_valuations = valuations
         observations = []
         for state in model.states.values():
@@ -285,7 +342,10 @@ def stormvogel_to_stormpy(
 
         components.observability_classes = observations
         components.choice_labeling = choice_labeling
-        pomdp = stormpy.storage.SparsePomdp(components)
+        if exact:
+            pomdp = stormpy.storage.SparseExactPomdp(components)
+        else:
+            pomdp = stormpy.storage.SparsePomdp(components)
 
         return pomdp
 
@@ -294,6 +354,11 @@ def stormvogel_to_stormpy(
         Takes a simple representation of an ma as input and outputs an ma how it is represented in stormpy
         """
         assert stormpy is not None
+
+        if exact:
+            raise ValueError(
+                "Exact sparse mas are not supported in the stormvogel mapping. Please set exact=False."
+            )
 
         # we determine the number of choices and the labels
         count = 0
