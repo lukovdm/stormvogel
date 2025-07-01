@@ -23,8 +23,10 @@ class Path:
 
     def __init__(
         self,
-        path: dict[int, tuple[stormvogel.model.Action, stormvogel.model.State]]
-        | dict[int, stormvogel.model.State],
+        path: (
+            dict[int, tuple[stormvogel.model.Action, stormvogel.model.State]]
+            | dict[int, stormvogel.model.State]
+        ),
         model: stormvogel.model.Model,
     ):
         if model.get_type() != stormvogel.model.ModelType.MA:
@@ -40,7 +42,7 @@ class Path:
             state = self.path[step]
             assert isinstance(state, stormvogel.model.State)
             return state
-        if self.supports_actions():
+        if self.model.supports_actions():
             t = self.path[step]
             assert (
                 isinstance(t, tuple)
@@ -112,8 +114,10 @@ class Path:
 
 def get_action(
     state: stormvogel.model.State,
-    scheduler: stormvogel.result.Scheduler
-    | Callable[[stormvogel.model.State], stormvogel.model.Action],
+    scheduler: (
+        stormvogel.result.Scheduler
+        | Callable[[stormvogel.model.State], stormvogel.model.Action]
+    ),
 ) -> stormvogel.model.Action:
     """Helper function to obtain the chosen action in a state by a scheduler."""
     assert scheduler is not None
@@ -161,9 +165,11 @@ def step(
 def simulate_path(
     model: stormvogel.model.Model,
     steps: int = 1,
-    scheduler: stormvogel.result.Scheduler
-    | Callable[[stormvogel.model.State], stormvogel.model.Action]
-    | None = None,
+    scheduler: (
+        stormvogel.result.Scheduler
+        | Callable[[stormvogel.model.State], stormvogel.model.Action]
+        | None
+    ) = None,
     seed: int | None = None,
 ) -> Path:
     """
@@ -220,9 +226,11 @@ def simulate(
     model: stormvogel.model.Model,
     steps: int = 1,
     runs: int = 1,
-    scheduler: stormvogel.result.Scheduler
-    | Callable[[stormvogel.model.State], stormvogel.model.Action]
-    | None = None,
+    scheduler: (
+        stormvogel.result.Scheduler
+        | Callable[[stormvogel.model.State], stormvogel.model.Action]
+        | None
+    ) = None,
     seed: int | None = None,
 ) -> stormvogel.model.Model | None:
     """

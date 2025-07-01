@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from fractions import Fraction
+from turtle import color
 from typing import Tuple, cast
 import copy
 
@@ -64,6 +65,7 @@ class State:
     model: "Model"
     observation: Observation | None
     name: str
+    color: str | None = None
 
     def __init__(
         self,
@@ -426,7 +428,8 @@ class RewardModel:
         auto_update_rewards: bool = True,
     ):
         """sets the reward at said state action pair (in case of models with actions).
-        If you disable auto_update_rewards, you will need to call update_intermediate_to"""
+        If you disable auto_update_rewards, you will need to call update_intermediate_to
+        """
         if self.model.supports_actions():
             if action in state.available_actions():
                 self.rewards[state.id, action] = value
@@ -452,7 +455,8 @@ class RewardModel:
 
     def set_unset_rewards(self, value: Number):
         """Fills up rewards that were not set yet with the specified value.
-        Use this if converting (to stormpy) doesn't work because the reward vector does not have the expected length."""
+        Use this if converting (to stormpy) doesn't work because the reward vector does not have the expected length.
+        """
         for s in self.model.states.values():
             for a in s.available_actions():
                 if (s.id, a) not in self.rewards:
@@ -774,9 +778,9 @@ class Model:
 
             # Empty action case, add the branches together.
             if transitions.has_empty_action():
-                self.transitions[s.id].transition[EmptyAction] += (
-                    transitions.transition[EmptyAction]
-                )
+                self.transitions[s.id].transition[
+                    EmptyAction
+                ] += transitions.transition[EmptyAction]
             else:
                 for action, branch in transitions.transition.items():
                     assert self.actions is not None

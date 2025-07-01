@@ -92,9 +92,8 @@ class Visualization(stormvogel.displayable.Displayable):
         self.max_physics_states: int = max_physics_states
         # If a scheduler was not set explictly, but a result was set, then take the scheduler from the results.
         self.layout: stormvogel.layout.Layout = layout
-        if self.scheduler is None:
-            if self.result is not None:
-                self.scheduler = self.result.scheduler
+        if self.scheduler is None and self.result is not None:
+            self.scheduler = self.result.scheduler
 
         # Set "scheduler" as an active group iff it is present.
         if self.scheduler is not None:
@@ -168,7 +167,8 @@ class Visualization(stormvogel.displayable.Displayable):
 
     def __group_state(self, s: stormvogel.model.State, default: str) -> str:
         """Return the group of this state.
-        That is, the label of s that has the highest priority, as specified by the user under edit_groups"""
+        That is, the label of s that has the highest priority, as specified by the user under edit_groups
+        """
         und_labels = set(map(lambda x: und(x), s.labels))
         res = list(
             filter(
@@ -202,12 +202,14 @@ class Visualization(stormvogel.displayable.Displayable):
                 state.id,
                 label=",".join(state.labels) + rewards + res + observations,
                 group=group,
+                color=state.color,
             )
 
     def __add_transitions(self) -> None:
         """For each transition in the model, add a transition in the graph.
         Also handles creating nodes for actions and their respective transitions.
-        Note that an action may appear multiple times in the model with a different state as source."""
+        Note that an action may appear multiple times in the model with a different state as source.
+        """
         if self.nt is None:
             return
         network_action_id = self.ACTION_ID_OFFSET
@@ -264,7 +266,7 @@ class Visualization(stormvogel.displayable.Displayable):
             return str(prob)
         else:
             if self.layout.layout["numbers"]["fractions"]:
-                return str(fractions.Fraction(prob).limit_denominator(1000))
+                return str(fractions.Fraction(float(prob)).limit_denominator(1000))
             else:
                 return str(round(float(prob), self.layout.layout["numbers"]["digits"]))
 
@@ -468,7 +470,8 @@ class Visualization(stormvogel.displayable.Displayable):
         """Highlight a set of tuples of (states and actions) in the model by changing their color.
         Args:
             decomp: A list of tuples (states, actions)
-            colors (optional): A list of colors for the decompossitions. Random colors are picked by default."""
+            colors (optional): A list of colors for the decompossitions. Random colors are picked by default.
+        """
         for n, v in enumerate(decomp):
             if colors is None:
                 color = random_color()

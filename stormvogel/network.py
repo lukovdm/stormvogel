@@ -42,7 +42,8 @@ class Network(stormvogel.displayable.Displayable):
             debug_output (widgets.Output): Debug information is displayed in this output. Leave to default if that doesn't interest you.
             do_init_server (bool): Set to true iff you want to initialize the server. Defaults to True.
             positions (dict): A dictionary of node positions. The keys are the node ids, and the values are dictionaries with x and y coordinates.
-            use_iframe (bool): Set to true iff you want to use an iframe. Defaults to False."""
+            use_iframe (bool): Set to true iff you want to use an iframe. Defaults to False.
+        """
         super().__init__(output, do_display, debug_output)
         if name is None:
             self.name: str = "".join(random.choices(string.ascii_letters, k=10))
@@ -103,6 +104,7 @@ class Network(stormvogel.displayable.Displayable):
         id: int,
         label: str | None = None,
         group: str | None = None,
+        color: str | None = None,
     ) -> None:
         """Add a node. Only use before calling show."""
         current = "{ id: " + str(id)
@@ -115,6 +117,8 @@ class Network(stormvogel.displayable.Displayable):
         if self.new_nodes_hidden and id != self.initial_node_id:
             current += ", hidden: true"
             current += ", physics: false"
+        if color is not None:
+            current += f', color: "{color}"'
         current += " },\n"
         self.nodes_js += current
 

@@ -8,15 +8,11 @@ except ImportError:
     stormpy = None
 
 
-def stormvogel_to_stormpy(
-    model: stormvogel.model.Model, exact: bool = False
-) -> Optional[
-    Union[
-        "stormpy.storage.SparseDtmc",
-        "stormpy.storage.SparseMdp",
-        "stormpy.storage.SparseCtmc",
-        "stormpy.storage.SparsePomdp",
-    ]
+def stormvogel_to_stormpy(model: stormvogel.model.Model, exact: bool = False) -> Union[
+    "stormpy.storage.SparseDtmc",
+    "stormpy.storage.SparseMdp",
+    "stormpy.storage.SparseCtmc",
+    "stormpy.storage.SparsePomdp",
 ]:
     def build_matrix(
         model: stormvogel.model.Model,
@@ -454,7 +450,7 @@ def stormpy_to_stormvogel(
         "stormpy.storage.SparsePomdp",
         "stormpy.storage.SparseMA",
     ],
-) -> stormvogel.model.Model | None:
+) -> stormvogel.model.Model:
     def add_states(
         model: stormvogel.model.Model,
         sparsemodel: stormpy.storage.SparseDtmc | stormpy.storage.SparseMdp,
